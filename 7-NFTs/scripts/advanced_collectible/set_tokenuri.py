@@ -20,6 +20,7 @@ def main():
             set_tokenURI(token_id, advanced_collectible, dog_metadata_dic[breed])
 
 
+# nft_contract, advancedCollectible contract
 def set_tokenURI(token_id, nft_contract, tokenURI):
     account = get_account()
     tx = nft_contract.setTokenURI(token_id, tokenURI, {"from": account})
