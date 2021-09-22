@@ -1,5 +1,5 @@
 from brownie import AdvancedCollectible, network
-from scripts.helpful_scripts import get_breed
+from scripts.helpful_scripts import get_breed  # mapping different breeds
 from metadata.sample_metadata import metadata_template
 from pathlib import Path
 import requests
@@ -12,28 +12,32 @@ breed_to_image_uri = {
     "ST_BERNARD": "https://ipfs.io/ipfs/QmUPjADFGEKmfohdTaNcWhp7VGk26h5jXDA7v3VtTnTLcW?filename=st-bernard.png",
 }
 
-
+# to run: brownie run scripts/advanced_collectible_create_metadata.py --network rinkeby
 def main():
     advanced_collectible = AdvancedCollectible[-1]
-    number_of_advanced_collectibles = advanced_collectible.tokenCounter()
+    number_of_advanced_collectibles = (
+        advanced_collectible.tokenCounter()
+    )  # create metadata for every nft created
     print(f"You have created {number_of_advanced_collectibles} collectibles!")
     for token_id in range(number_of_advanced_collectibles):
         breed = get_breed(advanced_collectible.tokenIdToBreed(token_id))
         metadata_file_name = (
             f"./metadata/{network.show_active()}/{token_id}-{breed}.json"
         )
-        collectible_metadata = metadata_template
+        collectible_metadata = metadata_template  # mapping
+        # check to see if file exists
         if Path(metadata_file_name).exists():
             print(f"{metadata_file_name} already exists! Delete it to overwrite")
         else:
             print(f"Creating Metadata file: {metadata_file_name}")
             collectible_metadata["name"] = breed
             collectible_metadata["description"] = f"An adorable {breed} pup!"
+            # file path for images, replace _ with -
             image_path = "./img/" + breed.lower().replace("_", "-") + ".png"
 
             image_uri = None
             if os.getenv("UPLOAD_IPFS") == "true":
-                image_uri = upload_to_ipfs(image_path)
+                image_uri = upload_to_ipfs(image_path)  # upload to ipfs
             image_uri = image_uri if image_uri else breed_to_image_uri[breed]
 
             collectible_metadata["image"] = image_uri
@@ -47,14 +51,17 @@ def main():
 
 
 def upload_to_ipfs(filepath):
+    # rb = read_binary as filepath
     with Path(filepath).open("rb") as fp:
         image_binary = fp.read()
         ipfs_url = "http://127.0.0.1:5001"
-        endpoint = "/api/v0/add"
-        response = requests.post(ipfs_url + endpoint, files={"file": image_binary})
-        ipfs_hash = response.json()["Hash"]
+        endpoint = "/api/v0/add"  # post request
+        response = requests.post(
+            ipfs_url + endpoint, files={"file": image_binary}
+        )  # api call
+        ipfs_hash = response.json()["Hash"]  # return hash key
         # "./img/0-PUG.png" -> "0-PUG.png"
-        filename = filepath.split("/")[-1:][0]
+        filename = filepath.split("/")[-1:][0]  # split it up and get last part of array
         image_uri = f"https://ipfs.io/ipfs/{ipfs_hash}?filename={filename}"
         print(image_uri)
         return image_uri
